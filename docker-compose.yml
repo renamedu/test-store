@@ -1,0 +1,44 @@
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./:/var/www
+      - ./_docker/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 8876:80
+    depends_on:
+      - app
+    container_name: test-store_nginx
+  app:
+    build:
+      context: .
+      dockerfile: _docker/app/Dockerfile
+    # volumes:
+    #   - ./:/var/www
+    depends_on:
+      - db
+    container_name: test-store_app
+  db:
+    image: mysql:8.0
+    restart: always
+    volumes:
+      - ./tmp/db:/var/lib/mysql
+      - ./_docker/dumps:/docker-entrypoint-initdb.d
+    environment:
+        MYSQL_DATABASE: teststore
+        MYSQL_ROOT_PASSWORD: root
+    ports:
+      - 3307:3306
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    container_name: test-store_db
+  frontend:
+    build:
+      context: ./test-frontend
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    # volumes:
+    #   - ./test-frontend:/app
+    depends_on:
+      - app
+    container_name: test-store_frontend
